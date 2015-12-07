@@ -7,7 +7,7 @@ function createLib(info, libDir) {
 	var conversionStream = JSONStream.parse('main', function map(mainModule) {
 		fs.writeFile(libDir + '/src/index.js', 'module.exports = require(\'./' + mainModule + '\');\n')
 	});
-	fs.writeFile(libDir + '/brjs-lib.conf', '', ifError(console.error));
+	fs.writeFile(libDir + '/brjs-lib.conf', 'requirePrefix: ' + info.libName, ifError(console.error));
 	readStream.pipe(conversionStream);
 }
 

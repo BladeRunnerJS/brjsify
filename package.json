@@ -4,7 +4,9 @@
   "description": "Export NPM libraries as BRJS libraries",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test:node",
+    "test:node": "mocha test",
+    "test:node:watch": "mocha test -w"
   },
   "author": "Dominic Chambers",
   "license": "ISC",
@@ -17,5 +19,9 @@
     "browserify": "^12.0.1",
     "mkdirp": "^0.5.1",
     "through2": "^2.0.0"
+  },
+  "devDependencies": {
+    "expectations": "^0.5.2",
+    "mocha": "^2.3.4"
   }
 }

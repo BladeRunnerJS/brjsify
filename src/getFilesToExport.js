@@ -8,7 +8,7 @@ function getFilesToExport(configPath, callback) {
 	var readStream = fs.createReadStream(configPath, {defaultEncoding: 'utf8'});
 	var conversionStream = JSONStream.parse('dependencies', function map(dependenciesMap) {
 		var dependencies = Object.keys(dependenciesMap);
-		return dependencies.map(function(dep) {return 'exports.' + dep + ' = require(\'' + dep +
+		return dependencies.map(function(dep) {return 'exports[\'' + dep + '\'] = require(\'' + dep +
 			'\');'}).join('\n');
 	});
 	var writeStream = fs.createWriteStream('brjsify-program.js', {defaultEncoding: 'utf8'});

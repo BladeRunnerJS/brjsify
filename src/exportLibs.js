@@ -11,14 +11,16 @@ function exportLibs(baseDir, outDir, verbose) {
 	var libs = {};
 
 	getFilesToExport(configPath, function(fileConfig) {
-		var info = fileInfo(baseDir, fileConfig.file);
+		var filePath = fileConfig.file.replace(baseDir, '');
+		var info = fileInfo(filePath);
 
 		if(info.libName) {
 			if(verbose) {
 				console.log(info.relativeFilePath + ' (' + info.libName + ')');
 			}
 
-			var libDir = outDir + info.libName;
+			var isScopedLib = info.libName.startsWith('@');
+			var libDir = outDir + ((!isScopedLib) ? info.libName : info.libName.substr(1).replace('/', '-'));
 			var file = libDir + '/src/' + info.relativeFilePath;
 			var dir = file.replace(/(.*)\/.*/, '$1');
 
