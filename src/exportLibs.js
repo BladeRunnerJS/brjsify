@@ -1,53 +1,77 @@
 var fs = require('fs');
 var mkdirp = require('mkdirp');
+var JSONStream = require('JSONStream');
 
 var getFilesToExport = require('./getFilesToExport.js');
-var legacyFilePath = require('./legacyFilePath.js');
-var fileInfo = require('./fileInfo.js');
-var createLib = require('./createLib.js');
+var getPathInfo = require('./getPathInfo.js');
 var ifError = require('./ifError.js');
 
-function exportFile(filePath, source, outDir, libs, verbose) {
-	var info = fileInfo(filePath);
+function createLib(libs, libDir, libName, libPackageJson) {
+	if(!libs[libName]) {
+		libs[libName] = true;
 
-	if(info.libName) {
-		if(verbose) {
-			console.log(info.relativeFilePath + ' (' + info.libName + ')');
-		}
-
-		var isScopedLib = info.libName.startsWith('@');
-		var libDir = outDir + ((!isScopedLib) ? info.libName : info.libName.substr(1).replace('/', '-'));
-		var file = libDir + '/src/' + info.relativeFilePath;
-		var dir = file.replace(/(.*)\/.*/, '$1');
-
-		mkdirp(dir, function(error) {
-			if(error) {
-				console.error(error);
-			}
-
-			if(!libs[info.libName]) {
-				createLib(info, libDir);
-				libs[info.libName] = true;
-			}
-
-			fs.writeFile(file, source, ifError(console.error));
+		mkdirp(libDir + '/src', function(error) {
+			var readStream = fs.createReadStream(libPackageJson);
+			var conversionStream = JSONStream.parse('main', function map(mainModule) {
+				fs.writeFile(libDir + '/src/index.js', 'module.exports = require(\'./' + mainModule + '\');\n')
+			});
+			fs.writeFile(libDir + '/brjs-lib.conf', 'requirePrefix: ' + libName, ifError(console.error));
+			readStream.pipe(conversionStream);
 		});
 	}
 }
 
+function exportFile(file, source) {
+	var dir = file.replace(/(.*)\/.*/, '$1');
+
+	mkdirp(dir, function(error) {
+		if(error) {
+			console.error(error);
+		}
+
+		fs.writeFile(file, source, ifError(console.error));
+	});
+}
+
 function exportLibs(baseDir, outDir, verbose) {
-	var configPath = baseDir + 'package.json';
+	var packageJsonPath = baseDir + 'package.json';
 	var libs = {};
 
-	getFilesToExport(configPath, function(fileConfig) {
-		var filePath = fileConfig.file.replace(baseDir, '');
-		exportFile(filePath, fileConfig.source, outDir, libs, verbose);
+	getFilesToExport(packageJsonPath, function(fileInfo) {
+		var filePath = fileInfo.file.replace(baseDir, '');
+		var pathInfo = getPathInfo(filePath);
 
-		var legacyPath = legacyFilePath(filePath);
-		if(legacyPath != filePath) {
-			var info = fileInfo(filePath);
-			var requirePath = info.libName + '/' + info.relativeFilePath;
-			exportFile(legacyPath, 'module.exports = require(\'' + requirePath + '\');', outDir, libs, verbose);
+		if(pathInfo.libName) {
+			if(verbose) {
+				console.log(pathInfo.relativeFilePath + ' (' + pathInfo.libName + ')');
+			}
+
+			var isScopedLib = pathInfo.libName.startsWith('@');
+			var libName = ((!isScopedLib) ? pathInfo.libName : pathInfo.libName.replace('/', '-'));
+			var libDir = outDir + libName;
+			createLib(libs, libDir, pathInfo.libName, pathInfo.libPath + '/package.json');
+
+			var outputFilePath = libDir + '/src/' + pathInfo.relativeFilePath;
+			exportFile(outputFilePath, fileInfo.source);
+
+			var legacyLibName, legacyLibDir;
+			if(isScopedLib) {
+				legacyLibName = pathInfo.libName.replace('@brjs', '@br').replace('@', '');
+				legacyLibDir = outDir + legacyLibName.replace('/', '-');
+
+				createLib(libs, legacyLibDir, legacyLibName, pathInfo.libPath + '/package.json');
+			}
+			else {
+				legacyLibName = libName;
+				legacyLibDir = libDir;
+			}
+
+			var legacyRelativeFilePath = pathInfo.relativeFilePath.replace('/modules/', '/');
+			var legacyOutputFilePath = legacyLibDir + '/src/' + legacyRelativeFilePath;
+			if(legacyOutputFilePath != outputFilePath) {
+				var requirePath = pathInfo.libName + '/' + pathInfo.relativeFilePath.replace('.js', '');
+				exportFile(legacyOutputFilePath, 'module.exports = require(\'' + requirePath + '\');');
+			}
 		}
 	});
 }

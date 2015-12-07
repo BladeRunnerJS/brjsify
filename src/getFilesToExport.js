@@ -4,8 +4,8 @@ var JSONStream = require('JSONStream');
 var through = require('through2');
 var ifError = require('./ifError.js');
 
-function getFilesToExport(configPath, callback) {
-	var readStream = fs.createReadStream(configPath, {defaultEncoding: 'utf8'});
+function getFilesToExport(packageJsonPath, callback) {
+	var readStream = fs.createReadStream(packageJsonPath, {defaultEncoding: 'utf8'});
 	var conversionStream = JSONStream.parse('dependencies', function map(dependenciesMap) {
 		var dependencies = Object.keys(dependenciesMap);
 		return dependencies.map(function(dep) {return 'exports[\'' + dep + '\'] = require(\'' + dep +
@@ -17,8 +17,8 @@ function getFilesToExport(configPath, callback) {
 	stream.on('finish', function() {
 		var b = browserify('brjsify-program.js');
 		b.pipeline.get('deps').push(through.obj(
-			function(fileConfig, enc, next) {
-				callback(fileConfig);
+			function(fileInfo, enc, next) {
+				callback(fileInfo);
 				next();
 			},
 			function() {

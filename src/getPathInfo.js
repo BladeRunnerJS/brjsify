@@ -1,4 +1,4 @@
-function fileInfo(filePath) {
+function getPathInfo(filePath) {
 	var libRelativeFilePath = filePath.replace(/.*node_modules\//, '');
 	var isScopedLib = libRelativeFilePath.startsWith('@');
 	var firstSepPos = libRelativeFilePath.indexOf('/');
@@ -10,4 +10,4 @@ function fileInfo(filePath) {
 	return {filePath: filePath, libName: libName, relativeFilePath: relativeFilePath, libPath: libPath};
 }
 
-module.exports = fileInfo;
+module.exports = getPathInfo;
