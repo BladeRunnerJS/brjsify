@@ -1,5 +1,5 @@
-var fileInfo = require('../src/fileInfo.js');
 var expect = require('expectations');
+var fileInfo = require('../src/fileInfo.js');
 
 describe('fileInfo', function() {
 	it('provides valid file information for top-level libraries', function() {
