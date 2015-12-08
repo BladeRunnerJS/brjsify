@@ -11,6 +11,10 @@ function createLib(libs, libDir, libName, libPackageJson) {
 		libs[libName] = true;
 
 		mkdirp(libDir + '/src', function(error) {
+			if(error) {
+				console.error(error);
+			}
+
 			var readStream = fs.createReadStream(libPackageJson);
 			var conversionStream = JSONStream.parse('main', function map(mainModule) {
 				fs.writeFile(libDir + '/src/index.js', 'module.exports = require(\'./' + mainModule + '\');\n')

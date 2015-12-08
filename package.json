@@ -4,6 +4,8 @@
   "description": "Export NPM libraries as BRJS libraries",
   "main": "index.js",
   "scripts": {
+    "pretest": "npm run pretest:lint",
+    "pretest:lint": "eslint src test",
     "test": "npm run test:node",
     "test:node": "mocha test",
     "test:node:watch": "mocha test -w"
@@ -21,6 +23,7 @@
     "through2": "^2.0.0"
   },
   "devDependencies": {
+    "eslint": "^1.10.3",
     "expectations": "^0.5.2",
     "mocha": "^2.3.4"
   }
